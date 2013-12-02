@@ -1,0 +1,70 @@
+import sys
+import threading as t
+
+sys.path.append('util')
+sys.path.append('database')
+
+from server_util import * 
+from nova_util import *
+from meter_util import *
+from ceilometer_util import *
+from database_helper import *
+
+class Monitor(t.Thread):
+    
+	def __init__(self, env, delay, iterations=1):
+		t.Thread.__init__(self)
+		self.delay 		= delay
+		self.iterations 	= iterations
+		self.environment	= env
+	 
+	def run(self):
+
+		init_database(self.environment)
+
+		servers	= get_server_list_json(self.environment)
+		flavors = get_flavor_list_json(self.environment)
+
+		insert_project(self.environment, self.environment.project_id, self.environment.project_name)
+		insert_or_update_flavors(self.environment, flavors)
+		insert_or_update_servers(self.environment, servers)
+		
+		ct = 0
+		while ct < self.iterations:
+			
+			ct += 1
+			print 'Monitor: {0}'.format(ct)
+			
+			servers	= get_server_list_json(self.environment)
+			flavors = get_flavor_list_json(self.environment)
+
+			insert_or_update_flavors(self.environment, flavors)
+			insert_or_update_servers(self.environment, servers)
+
+			for x in range(0, len(servers['servers'])):	
+	
+				server_id		= get_server_id(servers, x)
+				current_time 		= time.time()
+				monitoring_interval 	= get_monitoring_interval(current_time, self.environment.control_periodicity)
+				meter_list		= self.environment.meter_list
+				
+				for y in range(0, len(meter_list)):
+					
+					meter_type	= meter_list[y]
+					meter_data	= get_meter_data(self.environment, meter_type, server_id, monitoring_interval)
+					
+					for z in range(0, len(meter_data)):
+
+						tmp_meter_util 	= meter_data[z]['counter_volume']
+						tmp_timestamp	= meter_data[z]['timestamp']
+		
+						timestamp 	= get_database_timestamp_format(tmp_timestamp, '%Y-%m-%dT%H:%M:%S')
+	
+						insert_meter_usage(self.environment, meter_type, server_id, self.environment.project_id, timestamp, tmp_meter_util)
+
+			if(ct < 1):
+
+				self.manager.start()
+
+			time.sleep(self.delay)
+

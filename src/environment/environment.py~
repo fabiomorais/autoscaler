@@ -1,0 +1,40 @@
+class Env(object):
+    
+	user_name 		= ''
+    	project_id		= ''
+    	project_name		= ''
+	user_password		= ''
+	ip_base			= ''
+	nova_port		= ''
+	ceilometer_port		= ''
+	keystone_port		= ''
+	auth_token		= ''
+	control_periodicity 	= ''
+	database_user		= ''
+	database_password	= ''
+	database_addr		= ''
+	database_port		= ''
+	database_database	= ''
+	meter_type		= []
+
+	def __init__(self, user_name, user_password, project_id, project_name, auth_token, ip_base, nova_port, ceilometer_port, keystone_port, control_periodicity, database_user, database_password, database_addr, database_port, database_database, meter_type):
+
+		self.user_name		= user_name
+	        self.user_password	= user_password
+	        self.project_id		= project_id
+		self.project_name	= project_name
+		self.auth_token		= auth_token
+		self.ip_base		= ip_base
+		self.nova_port		= nova_port
+		self.ceilometer_port	= ceilometer_port
+		self.keystone_port	= keystone_port
+		self.control_periodicity= control_periodicity
+		self.database_user	= database_user
+		self.database_password	= database_password
+		self.database_addr	= database_addr	
+		self.database_port	= database_port
+		self.database_database	= database_database
+		self.meter_type		= meter_type
+		
+
+

@@ -1,0 +1,49 @@
+import cStringIO
+import pycurl
+import json
+import sys
+
+
+sys.path.append('../environment')
+
+from environment import * 
+
+def get_server_list_json(env):
+
+	server_list_url	= get_server_list_url(env)
+
+	buf = cStringIO.StringIO()
+
+	c = pycurl.Curl()
+	c.setopt(c.URL, server_list_url)
+	c.setopt(c.HTTPHEADER, ['Accept: application/json', 'X-Auth-Project-Id: admin', 'User-Agent: python-novaclient', 'X-Auth-Token: ' + env.auth_token])
+	c.setopt(c.WRITEFUNCTION, buf.write)
+	c.perform()
+
+	json_data 	= buf.getvalue()
+	buf.close()
+
+	return json.loads(json_data)
+
+def get_flavor_list_json(env):
+
+	flavor_list_url	= get_flavor_list_url(env)
+
+	buf = cStringIO.StringIO()
+
+	c = pycurl.Curl()
+	c.setopt(c.URL, flavor_list_url)
+	c.setopt(c.HTTPHEADER, ['Accept: application/json', 'X-Auth-Project-Id: admin', 'User-Agent: python-novaclient', 'X-Auth-Token: ' + env.auth_token])
+	c.setopt(c.WRITEFUNCTION, buf.write)
+	c.perform()
+
+	json_data 	= buf.getvalue()
+	buf.close()
+
+	return json.loads(json_data)
+
+def get_server_list_url(env):
+	return 'http://' + env.ip_base + ':' + env.nova_port + '/v2/' + env.project_id + '/servers/detail'
+
+def get_flavor_list_url(env):
+	return 'http://' + env.ip_base + ':' + env.nova_port + '/v2/' + env.project_id + '/flavors/detail'
