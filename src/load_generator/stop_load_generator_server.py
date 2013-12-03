@@ -1,3 +1,5 @@
+import cStringIO
+import pycurl
 import subprocess
 import sys
 

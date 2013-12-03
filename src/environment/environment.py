@@ -15,9 +15,10 @@ class Env(object):
     database_addr       = ''
     database_port       = ''
     database_database   = ''
-    metric_list         = []
+    metric_type         = ''
     billing_period      = ''
     control_periodicity = ''
+    selection_peiodicity= ''
     max_instance_num    = ''
     min_instance_num    = ''
     instance_type_list  = []
@@ -28,7 +29,14 @@ class Env(object):
     reference_value     = ''
     
 
-    def __init__(self, user_name, user_password, project_id, project_name, auth_token, ip_base, nova_port, ceilometer_port, keystone_port, monitoring_period, database_user, database_password, database_addr, database_port, database_database, metric_list, billing_period, control_periodicity, max_instance_num, min_instance_num, instance_type_list, instance_id_list, instance_cpu_list, image_id, predictor_type_list, prediction_horizon, reference_value):
+    def __init__(self, user_name, user_password, project_id, project_name, 
+                 auth_token, ip_base, nova_port, ceilometer_port, keystone_port, 
+                 monitoring_period, database_user, database_password, database_addr, 
+                 database_port, database_database, metric_type, billing_period, 
+                 control_periodicity, selection_peiodicity, max_instance_num, 
+                 min_instance_num, instance_type_list, instance_id_list, 
+                 instance_cpu_list, image_id, predictor_type_list, 
+                 prediction_horizon, reference_value):
 
             self.user_name                = user_name
             self.user_password          = user_password
@@ -45,9 +53,10 @@ class Env(object):
             self.database_addr          = database_addr    
             self.database_port          = database_port
             self.database_database      = database_database
-            self.metric_list            = metric_list
+            self.metric_type            = metric_type
             self.billing_period         = billing_period
             self.control_periodicity    = control_periodicity
+            self.selection_peiodicity   = selection_peiodicity
             self.max_instance_num       = max_instance_num
             self.min_instance_num       = min_instance_num
             self.instance_type_list     = instance_type_list

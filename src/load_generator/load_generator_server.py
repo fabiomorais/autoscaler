@@ -13,10 +13,11 @@ from collections import deque
 app      = Flask(__name__)		
 QUEUE    = deque()
 
-log_file_path = str(os.getcwd() + '/log/generator_server.log')
+log_file_path = str(os.getcwd() + '/../log/generator_server.log')
+
+print log_file_path
 
 logging.basicConfig(filename=log_file_path,level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  datefmt='%Y-%m-%d %H:%M:%S')
-
 logger = logging.getLogger('generator_server')
 
 def get_ips_list():
@@ -55,12 +56,11 @@ def get_metric_value(metric_type, file_name):
 	
 	for row in csv_file:
 
-		cpu_util = 0
-    		if rownum == 0:
-				header = row
-				col_index = header.index(col_name)
-    		else:
-				yield 	row[col_index]
+		if rownum == 0:
+			header = row
+			col_index = header.index(col_name)
+		else:
+			yield 	row[col_index]
 
 		rownum += 1
 
@@ -109,6 +109,8 @@ class CPULoaderServer(t.Thread):
 			if is_ips_list_available():
 				self.ips_list = list(get_ips_list())
 				self.delay = self.periodicy
+			else:
+				logger.warning('Waiting for clients')
 			
 			if len(self.ips_list) > 0:
 				
@@ -132,5 +134,9 @@ if __name__ == '__main__':
 	
 	cpu_loader = CPULoaderServer(delay, metric_type, metric_file, error)
 	cpu_loader.start()
+
+	#Disable flask log
+	log = logging.getLogger('werkzeug')
+	log.setLevel(logging.ERROR)
 
 	app.run('0.0.0.0', port=port_addr)	

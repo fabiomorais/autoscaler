@@ -3,7 +3,7 @@ import time
 import cStringIO
 import pycurl
 
-sys.path.append('conf')
+sys.path.append('../conf')
 sys.path.append('controller')
 sys.path.append('database')
 sys.path.append('environment')
@@ -46,12 +46,12 @@ if __name__ == '__main__':
     manager     = Manager(env, delay, iterations, "2480e901-e945-4612-96fd-f4ec14d1e35f")
     #controller  = Controller(env, delay, iterations)
     
-    monitor.start()
-    time.sleep(1)
-    manager.start()
+    #monitor.start()
+    #time.sleep(1)
+    #manager.start()
     #time.sleep(1)
     #controller.start()
     
-    monitor.join()
-    manager.join()
+    #monitor.join()
+    #manager.join()
     #controller.join()

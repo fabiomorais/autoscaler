@@ -2,7 +2,7 @@ import threading as t
 import time
 
 from metric_util import get_monitoring_interval
-from database_helper import create_or_update_metric_average_view
+from database_helper import create_or_update_metric_average_view_by_server
 from database_helper import create_or_update_metric_view
 from database_helper import create_or_update_uptime_vm_view
 
@@ -33,7 +33,7 @@ class Manager(t.Thread):
 				current_time 		= time.time()
 				monitoring_interval	= get_monitoring_interval(current_time, self.environment.monitoring_period)
 
-				create_or_update_metric_average_view(self.environment, metric_type, monitoring_interval, self.server_id)
+				create_or_update_metric_average_view_by_server(self.environment, metric_type, monitoring_interval, self.server_id)
 				#create_or_update_metric_view(self.environment, metric_type, monitoring_interval)
 				#create_or_update_uptime_vm_view(self.environment, monitoring_interval)
 

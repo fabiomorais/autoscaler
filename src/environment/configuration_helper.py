@@ -1,3 +1,4 @@
+
 import subprocess
 import re
 
@@ -30,38 +31,44 @@ class _Const(object):
 
 def create_environment(configuration_file):
 
-	nova_port			= configuration_file.NOVA_PORT
-	keystone_port		= configuration_file.KEYSTONE_PORT
-	ceilometer_port		= configuration_file.CEILOMETER_PORT
-	user_password		= configuration_file.USER_PASSWORD
-	openrc_file_path	= configuration_file.OPENSTACK_CONF_FILE
-	monitoring_period	= configuration_file.MONITORING_PERIOD
-	database_user		= configuration_file.DATABASE_USER
-	database_password	= configuration_file.DATABASE_PASSWORD
-	database_addr		= configuration_file.DATABASE_ADDR
-	database_port		= configuration_file.DATABASE_PORT
-	database_database	= configuration_file.DATABASE_DB_NAME
-	metric_list			= get_metric_list(configuration_file.METRIC_TYPE)
+	nova_port				= configuration_file.NOVA_PORT
+	keystone_port			= configuration_file.KEYSTONE_PORT
+	ceilometer_port			= configuration_file.CEILOMETER_PORT
+	user_password			= configuration_file.USER_PASSWORD
+	openrc_file_path		= configuration_file.OPENSTACK_CONF_FILE
+	monitoring_period		= configuration_file.MONITORING_PERIOD
+	database_user			= configuration_file.DATABASE_USER
+	database_password		= configuration_file.DATABASE_PASSWORD
+	database_addr			= configuration_file.DATABASE_ADDR
+	database_port			= configuration_file.DATABASE_PORT
+	database_database		= configuration_file.DATABASE_DB_NAME
+	metric_type				= configuration_file.METRIC_TYPE
 	
-	billing_period		= configuration_file.BILLING_PERIOD
-	control_periodicity	= configuration_file.CONTROL_PERIODICITY
-	max_instance_num	= configuration_file.MAX_INSTANCE_NUMBER
-	min_instance_num	= configuration_file.MIN_INSTANCE_NUMBER
-	instance_type_list	= get_instance_type_list(configuration_file.FLAVOR_TYPE)
-	instance_id_list	= get_instance_id_list(configuration_file.FLAVOR_ID)
-	instance_cpu_list	= get_instance_cpu_list(configuration_file.FLAVOR_CPU)
-	image_id			= configuration_file.IMAGE_ID
-	predictor_type_list	= get_predictor_type_list(configuration_file.PREDICTOR_TYPE)
-	prediction_horizon	= configuration_file.PREDICTION_HORIZON
-	reference_value		= configuration_file.REFERENCE_VALUE
+	billing_period			= configuration_file.BILLING_PERIOD
+	control_periodicity		= configuration_file.CONTROL_PERIODICITY
+	selection_peiodicity	= configuration_file.SELECTION_PERIODICITY
+	max_instance_num		= configuration_file.MAX_INSTANCE_NUMBER
+	min_instance_num		= configuration_file.MIN_INSTANCE_NUMBER
+	instance_type_list		= get_instance_type_list(configuration_file.FLAVOR_TYPE)
+	instance_id_list		= get_instance_id_list(configuration_file.FLAVOR_ID)
+	instance_cpu_list		= get_instance_cpu_list(configuration_file.FLAVOR_CPU)
+	image_id				= configuration_file.IMAGE_ID
+	predictor_type_list		= get_predictor_type_list(configuration_file.PREDICTOR_TYPE)
+	prediction_horizon		= configuration_file.PREDICTION_HORIZON
+	reference_value			= configuration_file.REFERENCE_VALUE
 		
-	user_name			= get_user_name(openrc_file_path)
-	project_id			= get_project_id(openrc_file_path)
-	project_name		= get_project_name(openrc_file_path)
-	ip_base				= get_ip_base(openrc_file_path)
-	auth_token			= get_auth_token(ip_base, keystone_port, user_name, user_password, project_id)
+	user_name				= get_user_name(openrc_file_path)
+	project_id				= get_project_id(openrc_file_path)
+	project_name			= get_project_name(openrc_file_path)
+	ip_base					= get_ip_base(openrc_file_path)
+	auth_token				= get_auth_token(ip_base, keystone_port, user_name, user_password, project_id)
 	
-	return Env(user_name, user_password, project_id, project_name, auth_token, ip_base, nova_port, ceilometer_port, keystone_port, monitoring_period, database_user, database_password, database_addr, database_port, database_database, metric_list, billing_period, control_periodicity, max_instance_num, min_instance_num, instance_type_list, instance_id_list, instance_cpu_list, image_id, predictor_type_list, prediction_horizon, reference_value)
+	return Env(user_name, user_password, project_id, project_name, auth_token, ip_base, nova_port, 
+			ceilometer_port, keystone_port, monitoring_period, database_user, database_password, 
+			database_addr, database_port, database_database, metric_type, billing_period, 
+			control_periodicity, selection_peiodicity, max_instance_num, min_instance_num, 
+			instance_type_list, instance_id_list, instance_cpu_list, image_id, predictor_type_list, 
+			prediction_horizon, reference_value)
 
 def get_project_id(configuration_file):
 	CONST = _Const()

@@ -114,19 +114,17 @@ def get_server_update_structure():
 	update_server = ("UPDATE vm SET INSTANCE_NAME = , IMAGE_ID, FLAVOR_ID) SELECT \"{0}\", \"{1}\", \"{3}\", ID FROM flavor WHERE FLAVOR_ID = \"{2}\"")
 	return update_server
 
-# Sem VM id
 #def get_metric_create_or_update_view_structure():
 #	create_view = ("CREATE OR REPLACE VIEW utilization AS SELECT c.TIME, c.PROJECT_ID, c.UTIL AS UTIL_PERCENT, (c.UTIL * SUM(f.VCPUS) / 100) AS UTIL , SUM(f.VCPUS) AS ALLOC, \"{2}\" AS TYPE FROM utilization_average AS c, vm AS v, flavor AS f WHERE c.TYPE = \"{2}\" AND v.FLAVOR_ID = f.ID GROUP BY c.TIME")
 #	
 #	return create_view
 
-#Sem VM id
-#def get_metric_mean_create_or_update_view_structure():
-#	create_view = ("CREATE OR REPLACE VIEW utilization_average AS SELECT MIN(a.TIME) AS TIME, a.PROJECT_ID, AVG(a.UTIL) AS UTIL , \"{2}\" AS TYPE FROM metric_usage AS a, metric_usage AS b WHERE a.TYPE = \"{2}\" AND b.TYPE = \"{2}\" AND a.PROJECT_ID = \"{0}\" AND b.TIME = (SELECT MAX(TIME) as max from metric_usage) GROUP BY (UNIX_TIMESTAMP(a.TIME) - (UNIX_TIMESTAMP(b.TIME) MOD 300 + 1)) DIV 300")
-#	
-#	return create_view
+def get_metric_mean_create_or_update_view_structure_by_project():
+	create_view = ("CREATE OR REPLACE VIEW utilization_average AS SELECT MIN(a.TIME) AS TIME, a.PROJECT_ID, AVG(a.UTIL) AS UTIL , \"{2}\" AS TYPE FROM metric_usage AS a, metric_usage AS b WHERE a.TYPE = \"{2}\" AND b.TYPE = \"{2}\" AND a.PROJECT_ID = \"{0}\" AND b.TIME = (SELECT MAX(TIME) as max from metric_usage) GROUP BY (UNIX_TIMESTAMP(a.TIME) - (UNIX_TIMESTAMP(b.TIME) MOD 300 + 1)) DIV 300")
+	
+	return create_view
 
-def get_metric_mean_create_or_update_view_structure():
+def get_metric_mean_create_or_update_view_structure_by_server():
 	create_view = ("CREATE OR REPLACE VIEW utilization_average AS SELECT MIN(a.TIME) AS TIME, a.VM_ID, a.PROJECT_ID, AVG(a.UTIL) AS UTIL , \"{2}\" AS TYPE FROM metric_usage AS a, metric_usage AS b WHERE a.VM_ID = \"{3}\" AND b.VM_ID = \"{3}\" AND a.TYPE = \"{2}\" AND b.TYPE = \"{2}\" AND a.PROJECT_ID = \"{0}\" AND b.PROJECT_ID = \"{0}\" AND b.TIME = (SELECT MAX(TIME) as max from metric_usage) GROUP BY a.VM_ID, ((UNIX_TIMESTAMP(a.TIME) - (UNIX_TIMESTAMP(b.TIME) MOD 300 + 1)) DIV 300)")
 	
 	return create_view
@@ -147,13 +145,12 @@ def get_prediction_insert_structure():
 	add_prediction	= ("INSERT INTO metric_prediction (TIME, PROJECT_ID, UTIL_PERCENT, UTIL, ALLOC, TYPE, PREDICTOR) VALUES (\"{1}\", \"{0}\", {2}, {3}, {4}, \"{5}\", \"{6}\")")
 	return add_prediction
 
-#Sem VM_id
-#def get_metric_history_structure():
-#	metric_history = ("SELECT CONVERT_TZ(TIME,'+00:00','-03:00') as TIMESTAMP, UTIL, VM_ID FROM utilization_average WHERE TYPE = \"{1}\" AND VM_ID = \"{2}\"")
-#	return metric_history
+def get_metric_history_by_project_structure():
+	metric_history = ("SELECT CONVERT_TZ(TIME,'+00:00','-03:00') as TIMESTAMP, UTIL FROM utilization_average WHERE TYPE = \"{1}\" AND PROJECT_ID = \"{0}\"")
+	return metric_history
 
-def get_metric_history_structure():
-	metric_history = ("SELECT CONVERT_TZ(TIME,'+00:00','-03:00') as TIMESTAMP, UTIL, VM_ID FROM utilization_average WHERE TYPE = \"{1}\" AND VM_ID = \"{2}\"")
+def get_metric_history_by_server_structure():
+	metric_history = ("SELECT CONVERT_TZ(TIME,'+00:00','-03:00') as TIMESTAMP, UTIL, VM_ID FROM utilization_average WHERE TYPE = \"{1}\" AND PROJECT_ID = \"{0}\" AND VM_ID = \"{2}\"")
 	return metric_history
 	
 def execute_creation_command(env, command_structure, command_data_values):
@@ -225,10 +222,17 @@ def insert_or_update_servers(env, servers):
 	for x in range(0, len(servers['servers'])):
 		insert_or_update_server(env, servers['servers'][x])
 
-def create_or_update_metric_average_view(env, metric_type, monitoring_interval, server_id):
+def create_or_update_metric_average_view_by_server(env, metric_type, monitoring_interval, server_id):
 	
-	structure 	= get_metric_mean_create_or_update_view_structure()
+	structure 	= get_metric_mean_create_or_update_view_structure_by_server()
 	data_values	= (env.project_id, monitoring_interval[0], metric_type, server_id)
+
+	execute_creation_command(env, structure, data_values)
+	
+def create_or_update_metric_average_view_by_project(env, metric_type, monitoring_interval):
+	
+	structure 	= get_metric_mean_create_or_update_view_structure_by_project()
+	data_values	= (env.project_id, monitoring_interval[0], metric_type)
 
 	execute_creation_command(env, structure, data_values)
 
@@ -267,10 +271,18 @@ def insert_or_update_prediction(env, prediction):
 	
 	execute_creation_command(env, structure, data_values)
 	
-def get_metric_history(env, metric_type, server_id):
+def get_metric_history_by_server(env, metric_type, server_id):
 	
-	structure   = get_metric_history_structure()
+	structure   = get_metric_history_by_server_structure()
 	data_values	= (env.project_id, metric_type, server_id)
 	
 	
-	return execute_selection_command(env, structure, data_values)	
+	return execute_selection_command(env, structure, data_values)
+
+def get_metric_history_by_project(env, metric_type):
+	
+	structure   = get_metric_history_by_project_structure()
+	data_values	= (env.project_id, metric_type)
+	
+	
+	return execute_selection_command(env, structure, data_values)
