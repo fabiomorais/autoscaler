@@ -1,20 +1,28 @@
 from numpy.ma.core import ceil, maximum
 
-def capacity_planning(environment, prediction, metric_type):
-        
-        predicted       = float(prediction[3])
-        allocated       = float(prediction[4])
-        
-        if(metric_type == 'cpu_util'):
-            
-            capacity_list   = []
-            
-            for i in range(0, len(environment.instance_cpu_list)):
+def capacity_value(env, prediciton_value, cores_allocation_by_server):
 
-                instance_base   = float(environment.instance_cpu_list[i])
-                capacity        = int(maximum(int(ceil((predicted / float(environment.reference_value) / instance_base))), int(environment.min_instance_num)).data) 
-                variation       = capacity - allocated
-                
-                capacity_list.append((capacity, variation))
-            
-            return capacity_list
+        capacity    = int(maximum(int(ceil(round((prediciton_value / float(env.reference_value) / cores_allocation_by_server), 2))), int(env.min_instance_num)))
+        return capacity 
+
+def capacity_planning(environment, prediction, allocation):
+        
+        predicted                   = float(prediction[2])
+        allocated_instances         = allocation[0]                                 #Total number of instances
+        allocated_cores_by_sever    = allocation[1]                               #Total number of allocated coress
+        
+        print "prediction " + str(predicted)
+        print "allocated instances " + str(allocated_instances)
+        print "reference value " + str(environment.reference_value)
+        
+        capacity        = capacity_value(environment, predicted, allocated_cores_by_sever)
+        variation       = capacity - allocated_instances
+        
+        print "capacity " + str(capacity)
+              
+        capacity_planning  =  (capacity, variation)
+        
+        print capacity_planning
+        
+        return capacity_planning
+    

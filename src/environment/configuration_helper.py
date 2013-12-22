@@ -47,28 +47,37 @@ def create_environment(configuration_file):
 	billing_period			= configuration_file.BILLING_PERIOD
 	control_periodicity		= configuration_file.CONTROL_PERIODICITY
 	selection_peiodicity	= configuration_file.SELECTION_PERIODICITY
+	selection_data_length	= configuration_file.SELECTION_DATA_LENGTH
 	max_instance_num		= configuration_file.MAX_INSTANCE_NUMBER
 	min_instance_num		= configuration_file.MIN_INSTANCE_NUMBER
-	instance_type_list		= get_instance_type_list(configuration_file.FLAVOR_TYPE)
-	instance_id_list		= get_instance_id_list(configuration_file.FLAVOR_ID)
-	instance_cpu_list		= get_instance_cpu_list(configuration_file.FLAVOR_CPU)
+	instance_type			= configuration_file.FLAVOR_TYPE
+	instance_id				= configuration_file.FLAVOR_ID
 	image_id				= configuration_file.IMAGE_ID
+	image_name				= configuration_file.IMAGE_NAME
 	predictor_type_list		= get_predictor_type_list(configuration_file.PREDICTOR_TYPE)
 	prediction_horizon		= configuration_file.PREDICTION_HORIZON
 	reference_value			= configuration_file.REFERENCE_VALUE
-		
+	violation_value			= configuration_file.VIOLATION_VALUE
+	
+	enable_floating_ip		= configuration_file.ENALBLE_FLOATING_IP
+	floating_ip_list		= get_floating_ip_list(configuration_file.FLOATING_IP)
+	load_generator_ip		= configuration_file.LOAD_GENERATOR_ADDR
+	load_generator_port		= configuration_file.LOAD_GENERATOR_PORT
+	
 	user_name				= get_user_name(openrc_file_path)
 	project_id				= get_project_id(openrc_file_path)
 	project_name			= get_project_name(openrc_file_path)
 	ip_base					= get_ip_base(openrc_file_path)
 	auth_token				= get_auth_token(ip_base, keystone_port, user_name, user_password, project_id)
 	
+	is_cloud_prod			= configuration_file.CLOUD_PROD
+	
 	return Env(user_name, user_password, project_id, project_name, auth_token, ip_base, nova_port, 
 			ceilometer_port, keystone_port, monitoring_period, database_user, database_password, 
 			database_addr, database_port, database_database, metric_type, billing_period, 
-			control_periodicity, selection_peiodicity, max_instance_num, min_instance_num, 
-			instance_type_list, instance_id_list, instance_cpu_list, image_id, predictor_type_list, 
-			prediction_horizon, reference_value)
+			control_periodicity, selection_peiodicity, selection_data_length, max_instance_num, min_instance_num, 
+			instance_type, instance_id, image_id, image_name, predictor_type_list, 
+			prediction_horizon, reference_value, violation_value, enable_floating_ip, floating_ip_list, load_generator_ip, load_generator_port, is_cloud_prod)
 
 def get_project_id(configuration_file):
 	CONST = _Const()
@@ -77,17 +86,11 @@ def get_project_id(configuration_file):
 def get_metric_list(metric_list):
 	return metric_list.split(';')
 
-def get_instance_type_list(instance_type_list):
-	return instance_type_list.split(';')
-
-def get_instance_id_list(instance_id_list):
-	return instance_id_list.split(';')
-
-def get_instance_cpu_list(instance_cpu_list):
-	return instance_cpu_list.split(';')
-
 def get_predictor_type_list(predictor_type_list):
 	return predictor_type_list.split(';')
+
+def get_floating_ip_list(floating_ip_list):
+	return floating_ip_list.split(';')
 	
 def get_project_name(configuration_file):
 	CONST 		= _Const()
