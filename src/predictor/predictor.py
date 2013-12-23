@@ -12,7 +12,7 @@ from database_helper import get_prediction_history
 def persist_prediction(environment, prediction):
     insert_or_update_prediction(environment, prediction)
     
-def execute_prediction(env, history_json, predictor_name, num_period, pred_json, weight_json):
+def execute_prediction(env, history_json, predictor_name, num_period, pred_base_json, pred_json, weight_json):
     
     control_periodicity = env.control_periodicity
     prediction_horizon  = env.prediction_horizon
@@ -25,6 +25,7 @@ def execute_prediction(env, history_json, predictor_name, num_period, pred_json,
     command.append(str(control_periodicity))
     command.append(str(prediction_horizon))
     command.append(str(num_period))
+    command.append(str(pred_base_json))
     command.append(str(pred_json))
     command.append(str(weight_json))
         
@@ -51,6 +52,7 @@ def prepare_prediction_data(env, data_length, metric_type, predictor_name):
     
     weight    = []
     pred      = []
+    pred_base = []
     
     if predictor_name == 'EN':
         weight_data     = get_weight_history_data(env, data_length * (len(env.predictor_type_list) - 1))
@@ -63,22 +65,30 @@ def prepare_prediction_data(env, data_length, metric_type, predictor_name):
         pattern                 = '%Y-%m-%d %H:%M:%S'
         timestamp               = time.strftime(pattern, time.gmtime(current_time))
     
-        pred_data       = get_prediction_history(env, metric_type, timestamp, data_length * (len(env.predictor_type_list)))
+        pred_data               = get_prediction_history(env, metric_type, timestamp, data_length * (len(env.predictor_type_list)))
+        
+        timestamp_base          = time.strftime(pattern, time.gmtime(current_time + env.prediction_horizon))
+            
+        pred_base_data  = get_prediction_history(env, metric_type, timestamp_base, data_length * (len(env.predictor_type_list)))
         
         for l in range(0,len(pred_data)):
             timestamp = (pred_data[l][1] - d.datetime(1970,1,1)).total_seconds()
             pred.append((timestamp, pred_data[l][3], pred_data[l][5]))
+        
+            timestamp = (pred_base_data[l][1] - d.datetime(1970,1,1)).total_seconds()
+            pred_base.append((timestamp, pred_base_data[l][3], pred_base_data[l][5]))
             
-    pred_json   = json.dumps(pred)   
-    weight_json = json.dumps(weight)
+    pred_json       = json.dumps(pred)  
+    pred_base_json  = json.dumps(pred_base)   
+    weight_json     = json.dumps(weight)
     
-    return history_json, weight_json, pred_json
+    return history_json, weight_json, pred_json, pred_base_json
     
 def _predict(env, metric_type, data_length, predictor_name, num_period):
         
-    history_json, weight_json, pred_json = prepare_prediction_data(env, data_length, metric_type, predictor_name) 
+    history_json, weight_json, pred_json, pred_base_json = prepare_prediction_data(env, data_length, metric_type, predictor_name) 
     
-    prediction_json         = execute_prediction(env, history_json, predictor_name, num_period, pred_json, weight_json)
+    prediction_json         = execute_prediction(env, history_json, predictor_name, num_period, pred_base_json, pred_json, weight_json)
         
     timestamp_pred          = prediction_json[0]['TIMESTAMP']
     metric_pred             = prediction_json[0]['CPU_UTIL']
