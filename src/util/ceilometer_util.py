@@ -33,7 +33,7 @@ def get_metric_data(env, meter, server_id, monitoring_interval):
 
 	json_data 	= buf.getvalue()
 	buf.close()
-
+	
 	return json.loads(json_data)
 
 def get_metric_statistics_url(env, meter):	

@@ -59,8 +59,7 @@ def create_tables(cursor):
 	"`PROJECT_ID` VARCHAR(255),"
 	"`UTIL` FLOAT," 
 	"`TYPE` VARCHAR(255),"
-	"PRIMARY KEY (`ID`),"
-	"CONSTRAINT `metric_usage_ibfk_2` FOREIGN KEY (`PROJECT_ID`) REFERENCES `project`(`ID`) ON DELETE CASCADE"
+	"PRIMARY KEY (`ID`)"
 	")")	
 	
 	#"CONSTRAINT `metric_usage_ibfk_1` FOREIGN KEY (`VM_ID`) REFERENCES `vm`(`ID`) ON DELETE CASCADE,"
@@ -73,23 +72,20 @@ def create_tables(cursor):
 	"`UTIL` FLOAT,"
 	"`TYPE` VARCHAR(255),"
 	"`PREDICTOR` VARCHAR(255),"
-	"PRIMARY KEY (`ID`),"
-	"CONSTRAINT `metric_prediction_ibfk_1` FOREIGN KEY (`PROJECT_ID`) REFERENCES `project`(`ID`) ON DELETE CASCADE"
+	"PRIMARY KEY (`ID`)"
 	")")
 	
 	TABLES.append(
 	"CREATE TABLE `utilization` ("
 	"`ID` INT NOT NULL AUTO_INCREMENT,"
 	"`TIME` TIMESTAMP,"
-	"`PROJECT_ID` VARCHAR(255),"
+	"`PROJECT_ID` VARCHAR(255) NOT NULL,"
 	"`UTIL_PERCENT` FLOAT,"
 	"`UTIL` FLOAT,"
 	"`ALLOC` FLOAT,"
 	"`TYPE` VARCHAR(255),"
-	"PRIMARY KEY (`ID`),"
-	"CONSTRAINT `utilization_ibfk_1` FOREIGN KEY (`PROJECT_ID`) REFERENCES `project`(`ID`) ON DELETE CASCADE"
+	"PRIMARY KEY (`ID`)"
 	")")
-	
 	
 	TABLES.append(
 	"CREATE TABLE `utilization_average` ("
@@ -98,8 +94,7 @@ def create_tables(cursor):
 	"`PROJECT_ID` VARCHAR(255) NOT NULL,"
 	"`UTIL_PERCENT` FLOAT NOT NULL,"
 	"`TYPE` VARCHAR(255),"
-	"PRIMARY KEY (`ID`),"
-	"CONSTRAINT `utilization_average_ibfk_1` FOREIGN KEY (`PROJECT_ID`) REFERENCES `project`(`ID`) ON DELETE CASCADE"
+	"PRIMARY KEY (`ID`)"
 	")")
 
 	TABLES.append(
@@ -109,8 +104,7 @@ def create_tables(cursor):
 	"`PROJECT_ID` VARCHAR(255) NOT NULL,"
 	"`WEIGHT` FLOAT NOT NULL,"
 	"`PREDICTOR` VARCHAR(255),"
-	"PRIMARY KEY (`ID`),"
-	"CONSTRAINT `predictor_weight_ibfk_1` FOREIGN KEY (`PROJECT_ID`) REFERENCES `project`(`ID`) ON DELETE CASCADE"
+	"PRIMARY KEY (`ID`)"
 	")")
 			
 	for x in range(0, len(TABLES)):
@@ -176,7 +170,7 @@ def get_metric_create_or_update_structure_by_project():
 
 def get_metric_mean_create_or_update_structure_by_project():
 	#create_view = ("CREATE OR REPLACE VIEW utilization_average AS SELECT MIN(a.TIME) AS TIME, a.PROJECT_ID, AVG(a.UTIL) AS UTIL , \"{2}\" AS TYPE FROM metric_usage AS a, metric_usage AS b WHERE a.TYPE = \"{2}\" AND b.TYPE = \"{2}\" AND a.PROJECT_ID = \"{0}\" AND b.TIME = (SELECT MAX(TIME) as max from metric_usage) GROUP BY (UNIX_TIMESTAMP(a.TIME) - (UNIX_TIMESTAMP(b.TIME) MOD {3} + 1)) DIV {3}")
-	create_view = ("INSERT INTO utilization_average (TIME, PROJECT_ID, UTIL_PERCENT, TYPE) SELECT MIN(TIME), PROJECT_ID, AVG(UTIL), \"{2}\" FROM metric_usage WHERE TYPE = \"{2}\" AND PROJECT_ID = \"{0}\" AND TIME > (SELECT MAX(TIME) as max from utilization_average)")
+	create_view = ("INSERT INTO utilization_average (TIME, PROJECT_ID, UTIL_PERCENT, TYPE) SELECT MAX(TIME), PROJECT_ID, AVG(UTIL), \"{2}\" FROM metric_usage WHERE TYPE = \"{2}\" AND PROJECT_ID = \"{0}\" AND TIME > (SELECT MAX(TIME) as max from utilization_average)")
 	return create_view
 
 def get_metric_mean_create_or_update_structure_by_server():
@@ -447,5 +441,5 @@ def get_prediction_history(env, metric_type, time_limit, data_length):
 	
 	structure   = get_prediction_history_structure()
 	data_values	= (env.project_id, metric_type, time_limit, data_length)
-	
+
 	return execute_selection_command(env, structure, data_values)

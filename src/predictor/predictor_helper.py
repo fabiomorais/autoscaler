@@ -7,8 +7,6 @@ from capacity_planner import capacity_value
 
 def select_predictor(env):
     
-    return get_predictor_by_name(env, 'EN')
-
     current_time            = time.time()
     metric_history          = get_history_data(env, env.selection_data_length, env.metric_type)
     pattern                 = '%Y-%m-%d %H:%M:%S'
@@ -60,20 +58,20 @@ def select_predictor(env):
     predictor_selection     = predictors_cost[0]
     print 'Selected predictor: ' + str(predictor_selection)
     
-    return get_predictor_by_name(env, predictor_selection)
+    return get_predictor_by_name(env, predictor_selection, None)
     
-def get_predictor_by_name(env, predictor_name):
+def get_predictor_by_name(env, predictor_name, event):
     
     if predictor_name == 'LW':
-        return LastWindow(env, env.metric_type)
+        return LastWindow(env, env.metric_type, event)
     elif predictor_name == 'AC':
-        return AutoCorrelation(env, env.metric_type)
+        return AutoCorrelation(env, env.metric_type, event)
     elif predictor_name == 'LR':
-        return LinearRegression(env, env.metric_type)
+        return LinearRegression(env, env.metric_type, event)
     elif predictor_name == 'AR':
-        return AutoRegression(env, env.metric_type)
+        return AutoRegression(env, env.metric_type, event)
     elif predictor_name == 'ARIMA':
-        return ARIMA(env, env.metric_type)
+        return ARIMA(env, env.metric_type, event)
     elif predictor_name == 'EN':
         return Ensemble(env, env.metric_type)
     return None

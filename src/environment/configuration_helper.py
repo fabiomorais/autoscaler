@@ -55,6 +55,7 @@ def create_environment(configuration_file):
 	image_id				= configuration_file.IMAGE_ID
 	image_name				= configuration_file.IMAGE_NAME
 	predictor_type_list		= get_predictor_type_list(configuration_file.PREDICTOR_TYPE)
+	predictor_data_lenght	= get_predictor_data_lenght(configuration_file.PREDICTOR_DATA_LEN, predictor_type_list)
 	prediction_horizon		= configuration_file.PREDICTION_HORIZON
 	reference_value			= configuration_file.REFERENCE_VALUE
 	violation_value			= configuration_file.VIOLATION_VALUE
@@ -76,7 +77,7 @@ def create_environment(configuration_file):
 			ceilometer_port, keystone_port, monitoring_period, database_user, database_password, 
 			database_addr, database_port, database_database, metric_type, billing_period, 
 			control_periodicity, selection_peiodicity, selection_data_length, max_instance_num, min_instance_num, 
-			instance_type, instance_id, image_id, image_name, predictor_type_list, 
+			instance_type, instance_id, image_id, image_name, predictor_type_list, predictor_data_lenght,
 			prediction_horizon, reference_value, violation_value, enable_floating_ip, floating_ip_list, load_generator_ip, load_generator_port, is_cloud_prod)
 
 def get_project_id(configuration_file):
@@ -88,6 +89,15 @@ def get_metric_list(metric_list):
 
 def get_predictor_type_list(predictor_type_list):
 	return predictor_type_list.split(';')
+
+def get_predictor_data_lenght(predictor_data_len_list, predictor_type_list):
+	
+	predictor_data_len_dict = {}
+	data_len_list = predictor_data_len_list.split(';')
+	for i in xrange(len(data_len_list)):
+		predictor_data_len_dict[predictor_type_list[i]] = data_len_list[i]
+
+	return predictor_data_len_dict
 
 def get_floating_ip_list(floating_ip_list):
 	return floating_ip_list.split(';')

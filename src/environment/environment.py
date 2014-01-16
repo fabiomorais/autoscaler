@@ -46,11 +46,11 @@ class Env(object):
                  database_port, database_database, metric_type, billing_period, 
                  control_periodicity, selection_peiodicity, selection_data_length, 
                  max_instance_num, min_instance_num, instance_type, instance_id, 
-                 image_id, image_name, predictor_type_list, 
+                 image_id, image_name, predictor_type_list, predictor_data_length,
                  prediction_horizon, reference_value, violation_value, enable_floating_ip, 
                  floating_ip_list, load_generator_ip, load_generator_port, is_cloud_prod):
 
-            self.user_name                = user_name
+            self.user_name              = user_name
             self.user_password          = user_password
             self.project_id             = project_id
             self.project_name           = project_name
@@ -76,6 +76,7 @@ class Env(object):
             self.image_id               = image_id
             self.image_name             = image_name
             self.predictor_type_list    = predictor_type_list
+            self.predictor_data_length  = predictor_data_length
             self.prediction_horizon     = prediction_horizon
             self.reference_value        = reference_value
             self.violation_value        = violation_value

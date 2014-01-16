@@ -1,3 +1,8 @@
+suppressMessages(library(foreach, quietly=TRUE))
+suppressMessages(library(plyr, quietly=TRUE))
+suppressMessages(library(signal, quietly=TRUE))
+suppressMessages(library(forecast, quietly=TRUE))
+
 predict_AR = function(df_trace, periodicity, pred_ahead, num_period){
     
 	# Horizon
@@ -185,29 +190,10 @@ predict_LW = function(df_trace, periodicity, pred_ahead, num_period){
     prediction_result
 }
 
-calc_cost <- function(prediction,raw_data){
-     T_hit <- 5
-     T_miss <- 1040
-     R_vm <- 400
-     BETA <- 0.5
-     cost <- if(raw_data < prediction) {
-          (BETA * raw_data * T_hit) + ((1-BETA)*(prediction - raw_data) * R_vm)
-     }else{
-          (BETA * prediction * T_hit) + ((raw_data-prediction) * T_miss)
-     }
-     cost
-}
-
 predict_EN = function(df_trace, periodicity, pred_ahead, num_period, df_pred, df_pred_history, df_weight, pred_names, list_of_periods){
-    
-   
-   	print(df_trace)
-   	print(df_weight)
-   	print(df_pred)
-   	print(df_pred_history)
    	
     df_pred$PREDICTOR    <- as.character(df_pred$PREDICTOR)
-    df_pred		     <- subset(df_pred, !(as.character(PREDICTOR) == "EN"))
+    df_pred		         <- subset(df_pred, !(as.character(PREDICTOR) == "EN"))
    
     list_of_df_pred	     <- dlply(df_pred, .(PREDICTOR))
     list_of_df_pred	     <- lapply(list_of_df_pred, function(x) { x$CPU_UTIL <- pmax(x$CPU_UTIL, 0); x})
@@ -215,6 +201,29 @@ predict_EN = function(df_trace, periodicity, pred_ahead, num_period, df_pred, df
     timestamp_pred 	     <- list_of_df_pred[[1]][1,1]
     
     weight     <- c()
+    
+    calc_cost <- function(prediction, raw_data){
+    
+    	 if(length(raw_data) == 0){
+		  
+		  		print("error")
+		  		print(df_trace)
+		  		print(df_pred)
+		  		print(df_pred_history)
+		 }
+		 
+		T_hit <- 5
+		T_miss <- 1040
+		R_vm <- 400
+		BETA <- 0.5
+		
+		cost <- if(raw_data < prediction) {
+			(BETA * raw_data * T_hit) + ((1-BETA)*(prediction - raw_data) * R_vm)
+		}else{
+			(BETA * prediction * T_hit) + ((raw_data-prediction) * T_miss)
+		}
+		cost
+	}
     
     if((length(df_weight) > 0) && (nrow(df_weight) > 0) && (length(df_pred_history) > 0) && (length(df_trace) > 0)){    
     
@@ -231,8 +240,9 @@ predict_EN = function(df_trace, periodicity, pred_ahead, num_period, df_pred, df
           weight			<- data.frame(rep(timestamp_pred_his, length(pred_names)), df_weight$WEIGHT, pred_names)
           names(weight)       <- c("TIMESTAMP", "WEIGHT", "PREDICTOR")
 
-          cost 			<- as.matrix(sapply(list_of_df_pred_his, function(x) calc_cost(x[1,2], subset(df_trace, TIMESTAMP==timestamp_pred_his)$CPU_UTIL), simplify=TRUE))
-               error 		     <- ((sum(cost)/cost) * as.vector(weight[1:nrow(weight), 2]))
+          #cost 			<- as.matrix(sapply(list_of_df_pred_his, function(x) calc_cost(x[1,2], subset(df_trace, (TIMESTAMP %/% 100) == (timestamp_pred_his %/% 100))$CPU_UTIL), simplify=TRUE))
+          cost 			<- as.matrix(sapply(list_of_df_pred_his, function(x) calc_cost(x[1,2], df_trace$CPU_UTIL[1]), simplify=TRUE))
+          error 		     <- ((sum(cost)/cost) * as.vector(weight[1:nrow(weight), 2]))
           
           weight 		     <- data.frame(rep(timestamp_pred, length(pred_names)), error/sum(error), sort(pred_names))
           names(weight)       <- c("TIMESTAMP", "WEIGHT", "PREDICTOR")
@@ -251,68 +261,4 @@ predict_EN = function(df_trace, periodicity, pred_ahead, num_period, df_pred, df
     names(prediction_result)  <- c("TIMESTAMP","CPU_UTIL")
     
     list(estimated = prediction_result, weight = weight)
-}
-
-suppressMessages(library(foreach, quietly=TRUE))
-suppressMessages(library(plyr, quietly=TRUE))
-suppressMessages(library(signal, quietly=TRUE))
-suppressMessages(library(forecast, quietly=TRUE))
-suppressMessages(library(df2json, quietly=TRUE))
-
-args  <- commandArgs(trailingOnly = TRUE)
-
-if(length(args) > 0){
-
-	method		     	<- as.character(args[1])
-	history_json        <- as.character(args[2]) #in number of cores
-	periodicity         <- as.numeric(args[3])
-	prediction_horizon  <- as.numeric(args[4])
-	pred_ahead	     	<- prediction_horizon / periodicity
-	num_period			<- as.numeric(args[5])
-	pred_json			<- as.character(args[6])
-	pred_history_json	<- as.character(args[7])
-	weight_json			<- as.character(args[8])
-	
-	pred_names          <- c("LW", "LR", "AC", "ARIMA", "AR")
-	list_of_periods     <- list("LW"=0, "LR"=0, "AC"=0, "ARIMA"=0, "AR"=2016)
-	
-	df_json		     	<- json2df(history_json) # data.frame(cbind(timestamps, trace_util_cores),0, "Original")
-	colnames(df_json)   <- c("TIMESTAMP", "CPU_UTIL_PERCENT", "CPU_UTIL", "CPU_ALLOC")
-	
-	
-	df_trace            <- df_json[rev(rownames(df_json)), ]
-	
-	if(method == "LW"){
-		estimated_trace     <- predict_LW(df_trace, periodicity, pred_ahead, num_period)
-	}else if(method == "AC"){
-		estimated_trace     <- predict_AC(df_trace, periodicity, pred_ahead, num_period)
-	}else if(method == "LR"){
-		estimated_trace     <- predict_LR(df_trace, periodicity, pred_ahead, num_period)
-	}else if(method == "AR"){
-		estimated_trace     <- predict_AR(df_trace, periodicity, pred_ahead, num_period)
-	}else if(method == "ARIMA"){
-		estimated_trace     <- predict_ARIMA(df_trace, periodicity, pred_ahead, num_period)
-	}else if(method == "EN"){
-	
-		df_pred					<- json2df(pred_json) 
-		df_pred	            	<- df_pred[rev(rownames(df_pred)), ]
-		names(df_pred) 			<- c("TIMESTAMP", "CPU_UTIL", "PREDICTOR")
-		
-		df_pred_history			<- json2df(pred_history_json) 
-		df_pred_history			<- df_pred_history[rev(rownames(df_pred_history)), ]
-		names(df_pred_history)	<- c("TIMESTAMP", "CPU_UTIL", "PREDICTOR")
-		
-		df_weight				<- json2df(weight_json) 
-		df_weight           	<- df_weight[rev(rownames(df_weight)), ]
-		names(df_weight) 		<- c("TIMESTAMP", "WEIGHT", "PREDICTOR")
-		
-		estimated_trace     <- predict_EN(df_trace, periodicity, pred_ahead, num_period, df_pred, df_pred_history, df_weight, pred_names, list_of_periods)
-	}
-	
-	output_json				<- df2json(estimated_trace)
-	
-	cat(output_json)
-
-}else{
-	print("without args")
 }

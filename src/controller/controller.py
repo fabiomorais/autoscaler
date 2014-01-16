@@ -24,16 +24,27 @@ def is_selection_point(selection_time, selection_peiodicity):
 
 def run_predictions(env, predictors_list):
     
+    events  = []
+    
     for p in predictors_list:
-        predictor   = get_predictor_by_name(env, p)
+        event       = t.Event()
+        predictor   = get_predictor_by_name(env, p, event)
         predictor.start()
+        
+        events.append(event)
+    
+    return events
+        
+def wait_for_all_events(events):
+    for e in events:
+        e.wait()
 
 class Controller(t.Thread):
             
     predictor_default  = None
     predictor          = None
     
-    def __init__(self, env, delay, predictor_default, iterations=1):
+    def __init__(self, env, delay, predictor_default, iterations, controller_event, manager_event):
 
         t.Thread.__init__(self)
         
@@ -41,11 +52,15 @@ class Controller(t.Thread):
         self.iterations         = iterations
         self.environment        = env
         self.predictor_default  = predictor_default
+        self.events             = None
+        self.controller_event   = controller_event
+        self.manager_event      = manager_event
+        self.delay_correction   = 0
     
     def run(self):
 
         if not (self.predictor_default == None):
-            self.predictor  = get_predictor_by_name(self.environment, self.predictor_default)
+            self.predictor  = get_predictor_by_name(self.environment, self.predictor_default, None)
             
         metric_type         = self.environment.metric_type
         selection_time      = 0
@@ -53,7 +68,19 @@ class Controller(t.Thread):
         ct = 0
         while ct < self.iterations:
 
-            time.sleep(self.delay)
+            time.sleep(self.delay - self.delay_correction)
+
+            print 'Controller delay:', self.delay_correction
+            
+                        
+            if not self.manager_event == None:
+                self.manager_event.wait()
+                self.manager_event.clear()
+                
+            if (not self.controller_event == None) and self.controller_event.is_set():
+                self.controller_event.clear()
+
+            start_time = time.time()
             
             instances_number        = get_number_of_servers(self.environment)
             cores_number_by_server  = get_number_of_cores_by_server(self.environment)
@@ -69,14 +96,27 @@ class Controller(t.Thread):
                 selection_time  = 0
                 self.predictor  = select_predictor(self.environment) 
                 
+            predictors_list = [ x for x in self.environment.predictor_type_list if (not x == self.predictor.NAME) and (not x == 'EN')]
+            self.events  = run_predictions(self.environment, predictors_list)
+
+            if self.predictor.NAME == 'EN':
+                wait_for_all_events(self.events)
+            
             prediction      = self.predictor.run()
+
+            if not self.predictor.NAME == 'EN':
+                en_predictor    = get_predictor_by_name(self.environment, 'EN', None)
+                wait_for_all_events(self.events)
+                en_predictor.start()
+                
             capacity_value  = capacity_planning(self.environment, prediction, allocation)
             
             actuator = Actuator(self.environment, capacity_value)
             actuator.start()
             
-            predictors_list = [ x for x in self.environment.predictor_type_list if not x == self.predictor.NAME]
-            
-            run_predictions(self.environment, predictors_list)
+            if not self.controller_event == None:
+                self.controller_event.set()
+                
+            self.delay_correction   = time.time() - start_time
         
         return self.predictor.NAME
