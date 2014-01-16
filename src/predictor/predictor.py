@@ -33,6 +33,7 @@ def execute_prediction(env, history_json, predictor_name, num_period, pred_base_
     result, error = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE).communicate()
 
     print error
+    
     #print result
     
     data_weight     = None
